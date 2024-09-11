@@ -86,6 +86,11 @@
             margin-bottom: 10px;
             color: #2980b9;
         }
+        #timer {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #e74c3c;
+        }
         #registration, #gameControls {
             margin-bottom: 20px;
         }
@@ -153,6 +158,7 @@
         </div>
         <div id="gameArea" style="display:none;">
             <div id="userInfo"></div>
+            <div id="timer"></div>
             <div id="grid" class="grid"></div>
             <div id="message"></div>
             <div id="score">Score: 0</div>
@@ -173,11 +179,10 @@
 
     <script>
         const words = [
-            'COMMANDANT', 'BUGLE', 'PARADE', 'PLATOON', 'OFFICER', 'BBB', 'POP', 'PPA', 'RSM', 'LGI',
-            'JOBSHEET', 'HALL', 'MAMMI', 'MUMU', 'OBS', 'MANOWAR', 'STREAM', 'BATCH', 'CORPS', 'NYSC',
-            'ARRIVAL', 'DIRECTOR', 'DEPARTURE', 'SWEARINGIN', 'CDS', 'MANCHO', 'KHAKI', 'JUNGLEBOOT',
-            'CRESTEDVEST', 'ORIENTATION', 'REGISTRATION', 'CALLUPLETTER', 'WANNUNE', 'TARKA', 'BENUE',
-            'DRILL', 'COMBAT', 'ADDENDUM', 'GREENCARD'
+            'COMMANDANT', 'BUGLE', 'PARADE', 'PLATOON', 'OFFICER', 'POP', 'PPA', 'RSM', 'LGI', 'JOBSHEET',
+            'HALL', 'MAMMI', 'MUMU', 'OBS', 'MANOWAR', 'STREAM', 'BATCH', 'CORPS', 'NYSC', 'ARRIVAL', 
+            'DEPARTURE', 'SWEARINGIN', 'CDS', 'KHAKI', 'JUNGLEBOOT', 'CRESTEDVEST', 'ORIENTATION', 'DRILL', 
+            'COMBAT', 'GREENCARD', 'BENUE'
         ];
         const gridSize = 15; 
         let grid = [];
@@ -186,22 +191,26 @@
         let score = 0;
         let userPlatoon = '';
         let userStateCode = '';
+        let gameTime = 300;  // 5-minute game timer
 
         function registerUser() {
             userPlatoon = document.getElementById('platoon').value;
             userStateCode = document.getElementById('stateCode').value;
-            if (userPlatoon && userStateCode) {
+            
+            const stateCodePattern = /^[A-Z]{2,4}\/\d{2}[A-Z]\/\d{4}$/;
+            if (userPlatoon && stateCodePattern.test(userStateCode)) {
                 document.getElementById('registration').style.display = 'none';
                 document.getElementById('gameArea').style.display = 'block';
                 document.getElementById('userInfo').textContent = `Platoon: ${userPlatoon} | State Code: ${userStateCode}`;
                 initGame();
             } else {
-                alert('Please select a platoon and enter your state code.');
+                alert('Please select a platoon and enter a valid state code (e.g., BENUE/23A/1234).');
             }
         }
 
         function initializeGrid() {
             const gridElement = document.getElementById('grid');
+            gridElement.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;  // Responsive columns
             gridElement.innerHTML = '';
             for (let i = 0; i < gridSize; i++) {
                 grid[i] = [];
@@ -222,144 +231,105 @@
                 let placed = false;
                 let attempts = 0;
                 while (!placed && attempts < 100) {
-                    const direction = Math.floor(Math.random() * 8);
-                    const row = Math.floor(Math.random() * gridSize);
-                    const col = Math.floor(Math.random() * gridSize);
-                    
-                    if (canPlaceWord(word, row, col, direction)) {
-                        placeWord(word, row, col, direction);
-                        placed = true;
-                    }
+                    placed = placeWord(word);
                     attempts++;
                 }
             });
-            fillEmptyCells();
         }
 
-        function canPlaceWord(word, row, col, direction) {
-            const dx = [0, 1, 1, 1, 0, -1, -1, -1][direction];
-            const dy = [1, 1, 0, -1, -1, -1, 0, 1][direction];
-            
-            if (row + word.length * dx < 0 || row + word.length * dx >= gridSize || 
-                col + word.length * dy < 0 || col + word.length * dy >= gridSize) {
-                return false;
-            }
-            
+        function placeWord(word) {
+            const directions = [
+                { dr: 0, dc: 1 },  // Right
+                { dr: 1, dc: 0 },  // Down
+                { dr: 1, dc: 1 },  // Down-Right
+                { dr: -1, dc: 1 }  // Up-Right
+            ];
+            const direction = directions[Math.floor(Math.random() * directions.length)];
+            const startRow = Math.floor(Math.random() * gridSize);
+            const startCol = Math.floor(Math.random() * gridSize);
+            let row = startRow;
+            let col = startCol;
             for (let i = 0; i < word.length; i++) {
-                const cell = grid[row + i * dx]?.[col + i * dy];
-                if (!cell || (cell.textContent && cell.textContent !== word[i])) {
+                if (row < 0 || row >= gridSize || col < 0 || col >= gridSize || grid[row][col].textContent !== '') {
                     return false;
                 }
+                row += direction.dr;
+                col += direction.dc;
             }
-            
-            return true;
-        }
-
-        function placeWord(word, row, col, direction) {
-            const dx = [0, 1, 1, 1, 0, -1, -1, -1][direction];
-            const dy = [1, 1, 0, -1, -1, -1, 0, 1][direction];
-            
+            row = startRow;
+            col = startCol;
             for (let i = 0; i < word.length; i++) {
-                const cell = grid[row + i * dx][col + i * dy];
-                cell.textContent = word[i];
+                grid[row][col].textContent = word[i];
+                row += direction.dr;
+                col += direction.dc;
             }
-        }
-
-        function fillEmptyCells() {
-            const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-            for (let i = 0; i < gridSize; i++) {
-                for (let j = 0; j < gridSize; j++) {
-                    if (!grid[i][j].textContent) {
-                        grid[i][j].textContent = letters[Math.floor(Math.random() * letters.length)];
-                    }
-                }
-            }
-        }
-
-        function toggleCellSelection(e) {
-            const cell = e.target;
-            const index = selectedCells.indexOf(cell);
-            
-            if (index === -1) {
-                selectedCells.push(cell);
-                cell.classList.add('selected');
-            } else {
-                selectedCells.splice(index, 1);
-                cell.classList.remove('selected');
-            }
-            
-            checkWord();
-        }
-
-        function checkWord() {
-            const selectedWord = selectedCells.map(cell => cell.textContent).join('');
-            const reversedWord = selectedWord.split('').reverse().join('');
-            
-            if (words.includes(selectedWord) && !discoveredWords.includes(selectedWord)) {
-                discoveredWords.push(selectedWord);
-                updateWordList(selectedWord);
-                updateScore(selectedWord.length);
-                highlightFoundWord(selectedCells);
-                clearSelection();
-                showMessage(`You found ${selectedWord}!`);
-            } else if (words.includes(reversedWord) && !discoveredWords.includes(reversedWord)) {
-                discoveredWords.push(reversedWord);
-                updateWordList(reversedWord);
-                updateScore(reversedWord.length);
-                highlightFoundWord(selectedCells);
-                clearSelection();
-                showMessage(`You found ${reversedWord}!`);
-            }
-        }
-
-        function highlightFoundWord(cells) {
-            cells.forEach(cell => {
-                cell.classList.add('found');
-            });
-        }
-
-        function updateWordList(word) {
-            const wordListElement = document.getElementById('word-list');
-            const wordElement = document.createElement('div');
-            wordElement.classList.add('word');
-            wordElement.textContent = word;
-            wordListElement.appendChild(wordElement);
-        }
-
-        function updateScore(wordLength) {
-            score += wordLength;
-            document.getElementById('score').textContent = `Score: ${score}`;
-        }
-
-        function showMessage(message) {
-            const messageElement = document.getElementById('message');
-            messageElement.textContent = message;
-            setTimeout(() => {
-                messageElement.textContent = '';
-            }, 2000);
+            return true;
         }
 
         function clearSelection() {
             selectedCells.forEach(cell => cell.classList.remove('selected'));
             selectedCells = [];
+            document.getElementById('message').textContent = '';
         }
 
-        function submitGame() {
-            document.getElementById('gameArea').style.display = 'none';
-            document.getElementById('gameResult').style.display = 'block';
-            
-            document.getElementById('finalScore').textContent = `Final Score: ${score}`;
-            document.getElementById('finalUserInfo').textContent = `Platoon: ${userPlatoon} | State Code: ${userStateCode}`;
-            document.getElementById('wordsFound').textContent = `Words Found: ${discoveredWords.join(', ')}`;
+        function toggleCellSelection() {
+            if (this.classList.contains('found')) return;
+            if (this.classList.contains('selected')) {
+                this.classList.remove('selected');
+                selectedCells = selectedCells.filter(cell => cell !== this);
+            } else {
+                this.classList.add('selected');
+                selectedCells.push(this);
+            }
+        }
+
+        function checkWord() {
+            const selectedWord = selectedCells.map(cell => cell.textContent).join('');
+            if (words.includes(selectedWord)) {
+                selectedCells.forEach(cell => cell.classList.add('found'));
+                discoveredWords.push(selectedWord);
+                score += 10;
+                document.getElementById('score').textContent = `Score: ${score}`;
+                document.getElementById('word-list').innerHTML += `<div class="word">${selectedWord}</div>`;
+                localStorage.setItem('discoveredWords', JSON.stringify(discoveredWords));  // Save progress
+                document.getElementById('message').textContent = 'Word found!';
+            } else {
+                document.getElementById('message').textContent = 'Invalid word, try again!';
+            }
+            clearSelection();
         }
 
         function initGame() {
             initializeGrid();
             placeWords();
-            discoveredWords = [];
-            score = 0;
-            document.getElementById('score').textContent = 'Score: 0';
-            document.getElementById('word-list').innerHTML = '';
+            startTimer();
+        }
+
+        function startTimer() {
+            const timerElement = document.getElementById('timer');
+            const timerInterval = setInterval(() => {
+                gameTime--;
+                const minutes = Math.floor(gameTime / 60);
+                const seconds = gameTime % 60;
+                timerElement.textContent = `Time Remaining: ${minutes}:${seconds < 10 ? '0' + seconds : seconds}`;
+                if (gameTime <= 0) {
+                    clearInterval(timerInterval);
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function submitGame() {
+            checkWord();
+        }
+
+        function endGame() {
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('gameResult').style.display = 'block';
+            document.getElementById('finalScore').textContent = `Final Score: ${score}`;
+            document.getElementById('finalUserInfo').textContent = `Platoon: ${userPlatoon} | State Code: ${userStateCode}`;
+            document.getElementById('wordsFound').textContent = `Words Found: ${discoveredWords.join(', ')}`;
+            localStorage.removeItem('discoveredWords');  // Clear progress after game ends
         }
     </script>
 </body>
