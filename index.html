@@ -139,8 +139,7 @@
 </head>
 <body>
     <div class="game-container">
-        <h1>WANNUNE NYSC CAMP Word Finder Game</h1>
-        <h3>How many words can you find and in How Many minutes 😊?</h3>
+        <h1>NYSC Word Finder Game</h1>
         <div id="registration">
             <select id="platoon">
                 <option value="">Select Platoon</option>
@@ -187,6 +186,10 @@
             'ARRIVAL', 'DIRECTOR', 'DEPARTURE', 'SWEARINGIN', 'CDS', 'MANCHO', 'KHAKI', 'JUNGLEBOOT',
             'CRESTEDVEST', 'ORIENTATION', 'REGISTRATION', 'CALLUPLETTER', 'WANNUNE', 'TARKA', 'BENUE',
             'DRILL', 'COMBAT', 'ADDENDUM', 'GREENCARD'
+        ];
+        const hardWords = [
+            'COMMANDANT', 'SWEARINGIN', 'CRESTEDVEST', 'ORIENTATION', 'REGISTRATION', 
+            'CALLUPLETTER', 'JUNGLEBOOT', 'ADDENDUM'
         ];
         const gridSize = 15;
         let grid = [];
@@ -311,14 +314,14 @@
             if (words.includes(selectedWord) && !discoveredWords.includes(selectedWord)) {
                 discoveredWords.push(selectedWord);
                 updateWordList(selectedWord);
-                updateScore(selectedWord.length);
+                updateScore(selectedWord);
                 highlightFoundWord(selectedCells);
                 clearSelection();
                 showMessage(`You found ${selectedWord}!`);
             } else if (words.includes(reversedWord) && !discoveredWords.includes(reversedWord)) {
                 discoveredWords.push(reversedWord);
                 updateWordList(reversedWord);
-                updateScore(reversedWord.length);
+                updateScore(reversedWord);
                 highlightFoundWord(selectedCells);
                 clearSelection();
                 showMessage(`You found ${reversedWord}!`);
@@ -339,8 +342,9 @@
             wordListElement.appendChild(wordElement);
         }
 
-        function updateScore(wordLength) {
-            score += wordLength;
+        function updateScore(word) {
+            const points = hardWords.includes(word) ? 7 : 5;
+            score += points;
             document.getElementById('score').textContent = `Score: ${score}`;
         }
 
@@ -388,15 +392,22 @@
         }
 
         function initGame() {
-            initializeGrid();
-            placeWords();
-            discoveredWords = [];
-            score = 0;
-            seconds = 0;
-            minutes = 0;
-            document.getElementById('score').textContent = 'Score: 0';
-            document.getElementById('timer').textContent = 'Time: 00:00';
-            document.getElementById('word-list').innerHTML = '';
-        }
-    </script>
-    </body>
+        initializeGrid();
+        placeWords();
+        discoveredWords = [];
+        score = 0;
+        seconds = 0;
+        minutes = 0;
+        document.getElementById('score').textContent = 'Score: 0';
+        document.getElementById('timer').textContent = 'Time: 00:00';
+        document.getElementById('word-list').innerHTML = '';
+    }
+
+    // Initialize the game when the window loads
+    window.onload = function() {
+        document.getElementById('gameArea').style.display = 'none';
+        document.getElementById('gameResult').style.display = 'none';
+    };
+</script>
+</body>
+</html>
