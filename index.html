@@ -31,7 +31,7 @@
         }
         .grid {
             display: grid;
-            grid-template-columns: repeat(12, 1fr);
+            grid-template-columns: repeat(15, 1fr);
             gap: 1px;
             margin-bottom: 20px;
             background-color: #ecf0f1;
@@ -85,6 +85,12 @@
             font-weight: bold;
             margin-bottom: 10px;
             color: #2980b9;
+        }
+        #timer {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin-bottom: 10px;
         }
         #registration, #gameControls {
             margin-bottom: 20px;
@@ -153,6 +159,7 @@
         </div>
         <div id="gameArea" style="display:none;">
             <div id="userInfo"></div>
+            <div id="timer">Time: 00:00</div>
             <div id="grid" class="grid"></div>
             <div id="message"></div>
             <div id="score">Score: 0</div>
@@ -166,6 +173,7 @@
         <div id="gameResult" style="display:none;">
             <h2>Game Results</h2>
             <p id="finalScore"></p>
+            <p id="finalTime"></p>
             <p id="finalUserInfo"></p>
             <p id="wordsFound"></p>
         </div>
@@ -173,16 +181,22 @@
 
     <script>
         const words = [
-            'NYSC', 'CORPS', 'PLATOON', 'PARADE', 'DRILL', 'KHAKI', 'CAMP', 'SERVICE',
-            'BATCH', 'PPA', 'CDS', 'DIRECTOR', 'MAMMY', 'BUGLE', 'STREAM', 'HALL'
+            'COMMANDANT', 'BUGLE', 'PARADE', 'PLATOON', 'OFFICER', 'BBB', 'POP', 'PPA', 'RSM', 'LGI',
+            'JOBSHEET', 'HALL', 'MAMMI', 'MUMU', 'OBS', 'MANOWAR', 'STREAM', 'BATCH', 'CORPS', 'NYSC',
+            'ARRIVAL', 'DIRECTOR', 'DEPARTURE', 'SWEARINGIN', 'CDS', 'MANCHO', 'KHAKI', 'JUNGLEBOOT',
+            'CRESTEDVEST', 'ORIENTATION', 'REGISTRATION', 'CALLUPLETTER', 'WANNUNE', 'TARKA', 'BENUE',
+            'DRILL', 'COMBAT', 'ADDENDUM', 'GREENCARD'
         ];
-        const gridSize = 12;
+        const gridSize = 15;
         let grid = [];
         let selectedCells = [];
         let discoveredWords = [];
         let score = 0;
         let userPlatoon = '';
         let userStateCode = '';
+        let timerInterval;
+        let seconds = 0;
+        let minutes = 0;
 
         function registerUser() {
             userPlatoon = document.getElementById('platoon').value;
@@ -192,6 +206,7 @@
                 document.getElementById('gameArea').style.display = 'block';
                 document.getElementById('userInfo').textContent = `Platoon: ${userPlatoon} | State Code: ${userStateCode}`;
                 initGame();
+                startTimer();
             } else {
                 alert('Please select a platoon and enter your state code.');
             }
@@ -341,11 +356,32 @@
             selectedCells = [];
         }
 
+        function startTimer() {
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function updateTimer() {
+            seconds++;
+            if (seconds === 60) {
+                seconds = 0;
+                minutes++;
+            }
+            const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            document.getElementById('timer').textContent = `Time: ${formattedTime}`;
+        }
+
+        function stopTimer() {
+            clearInterval(timerInterval);
+        }
+
         function submitGame() {
+            stopTimer();
             document.getElementById('gameArea').style.display = 'none';
             document.getElementById('gameResult').style.display = 'block';
             
+            const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             document.getElementById('finalScore').textContent = `Final Score: ${score}`;
+            document.getElementById('finalTime').textContent = `Time Taken: ${formattedTime}`;
             document.getElementById('finalUserInfo').textContent = `Platoon: ${userPlatoon} | State Code: ${userStateCode}`;
             document.getElementById('wordsFound').textContent = `Words Found: ${discoveredWords.join(', ')}`;
         }
@@ -355,9 +391,11 @@
             placeWords();
             discoveredWords = [];
             score = 0;
+            seconds = 0;
+            minutes = 0;
             document.getElementById('score').textContent = 'Score: 0';
+            document.getElementById('timer').textContent = 'Time: 00:00';
             document.getElementById('word-list').innerHTML = '';
         }
     </script>
-</body>
-</html>
+    </body>
